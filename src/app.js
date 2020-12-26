@@ -7,8 +7,6 @@ const { NODE_ENV } = require('./config')
 
 const articleRouter = require('./articleRouter')
 
-articlesService.serviceCheck();
-
 const app = express()
 
 const morganOption = (NODE_ENV === 'production')

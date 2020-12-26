@@ -8,12 +8,12 @@ const ArticlesService = require('./articles-service')
 const articleRouter = express.Router()
 const bodyParser = express.json()
 
-const cleanArticle = bookmark => ({
-    id: bookmark.id,
-    url: xss(bookmark.url),
-    title: xss(bookmark.title),
-    description: bookmark.description,
-    rating: bookmark.rating
+const cleanArticle = article => ({
+    id: article.id,
+    title: xss(article.title),
+    content: xss(article.content),
+    style: article.style,
+    date_published: xss(article.date_published)
   
   })
 

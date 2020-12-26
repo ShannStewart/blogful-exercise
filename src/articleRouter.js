@@ -1,20 +1,86 @@
+const path = require('path')
 const express = require('express')
-//const { v4: uuid } = require('uuid')
+const xss = require('xss')
+
 
 const ArticlesService = require('./articles-service')
 
 const articleRouter = express.Router()
 const bodyParser = express.json()
 
+const cleanArticle = bookmark => ({
+    id: bookmark.id,
+    url: xss(bookmark.url),
+    title: xss(bookmark.title),
+    description: bookmark.description,
+    rating: bookmark.rating
+  
+  })
+
 articleRouter
-    .route('/articles')
-    .get((res, req, next) => {
-        ArticlesService.getAllArticles(
-            /* need knex instance here */)
-        .then(articles => {
-            res.json(articles)
+    .route('/')
+    .get((req, res, next) =>{
+
+      const knexInstance = req.app.get('db')
+      ArticlesService.getAllArticles(knexInstance)
+      .then(article => {
+        res.json(article.map(cleanArticle))
+      })
+      .catch(next)
+    })
+    .post(bodyParser, (req, res, next) => {
+        const { title, content, date_published, style } = req.body;
+        const newArticle =  { title, content, date_published, style };
+
+
+        for (const [key, value] of Object.entries(newArticle))
+      if (value == null)
+        return res.status(400).json({
+          error: { message: `Missing '${key}' in request body` }
         })
-     .catch(next)
+
+    ArticlesService.insertArticle(
+      req.app.get('db'),
+      newArticle
+    )
+    .then(article => {
+      res
+        .status(201)
+        .location(`/articles/${article.id}`)
+        .json(cleanArticle(article))
+    })
+    .catch(next)
+})
+
+articleRouter
+    .route('/:id')
+    .get((req, res, next) =>{
+        ArticlesService.getById(
+          req.app.get('db'),
+          req.params.id
+        )
+      .then(article => {
+        if (!article){
+          return res.status(404).json({
+            error: { message: `Article doesnt exist`}
+          })
+        }
+        res.article = article;
+        next()
+      })
+      .catch(next)
+    })
+    .delete((req, res, next) =>{
+      ArticlesService.deleteItem(
+        req.app.get('db'),
+        req.params.id
+      )
+
+      .then(numRowsAffected => {
+        res.status(204).end()
+      })
+      .catch(next);
+
     })
 
 module.exports = articleRouter;

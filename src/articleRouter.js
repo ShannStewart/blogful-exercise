@@ -13,7 +13,8 @@ const cleanArticle = article => ({
     title: xss(article.title),
     content: xss(article.content),
     style: article.style,
-    date_published: xss(article.date_published)
+    date_published: xss(article.date_published),  
+    author: article.author
   
   })
 
@@ -29,8 +30,8 @@ articleRouter
       .catch(next)
     })
     .post(bodyParser, (req, res, next) => {
-        const { title, content, date_published, style } = req.body;
-        const newArticle =  { title, content, date_published, style };
+      const { title, content, style, author } = req.body;
+        const newArticle =  { title, content, style };
 
 
         for (const [key, value] of Object.entries(newArticle))
@@ -38,6 +39,7 @@ articleRouter
         return res.status(400).json({
           error: { message: `Missing '${key}' in request body` }
         })
+        newArticle.author = author
 
     ArticlesService.insertArticle(
       req.app.get('db'),
